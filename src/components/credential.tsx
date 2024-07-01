@@ -1,17 +1,17 @@
 import { Feather } from '@expo/vector-icons'
 import { Image, ImageBackground, Pressable, Text, View } from 'react-native'
 
+import { useBadgeStore } from '@/store/badge-store'
 import { colors } from '@/styles/colors'
 
 import { QRCode } from './qrcode'
 
-type Props = {
-  image?: string
-  onChangeAvatar?: () => void
-  onExpandQRCode?: () => void
-}
+type Props = { onChangeAvatar?: () => void; onExpandQRCode?: () => void }
 
-export function Credential({ onChangeAvatar, onExpandQRCode, image }: Props) {
+export function Credential({ onChangeAvatar, onExpandQRCode }: Props) {
+  const { data } = useBadgeStore()
+
+  console.log(data)
   return (
     <View className="w-full items-center self-stretch">
       <Image
@@ -25,17 +25,19 @@ export function Credential({ onChangeAvatar, onExpandQRCode, image }: Props) {
           className="px-6 py-8 h-40 self-stretch items-center  border border-white/10 overflow-hidden"
         >
           <View className="w-full items-center justify-between flex-row">
-            <Text className="text-zinc-50 text-sm font-bold">Unite Summit</Text>
-            <Text className="text-zinc-50 text-sm font-bold">#123</Text>
+            <Text className="text-zinc-50 text-sm font-bold">
+              {data?.eventTitle}
+            </Text>
+            <Text className="text-zinc-50 text-sm font-bold">#{data?.id}</Text>
           </View>
 
           <View className="w-40 h-40 bg-black rounded-full" />
         </ImageBackground>
 
-        {image ? (
+        {data?.image ? (
           <Pressable onPress={onChangeAvatar}>
             <Image
-              source={{ uri: image }}
+              source={{ uri: data.image }}
               alt="Band"
               className="w-36 h-36 rounded-full -mt-24"
             />
@@ -49,9 +51,11 @@ export function Credential({ onChangeAvatar, onExpandQRCode, image }: Props) {
           </Pressable>
         )}
 
-        <Text className="font-bold text-2xl text-zinc-50 mt-4">João Silva</Text>
+        <Text className="font-bold text-2xl text-zinc-50 mt-4">
+          {data?.name}
+        </Text>
         <Text className="font-regular text-base text-zinc-300 mb-4">
-          jaumm.silva.04@gmail.com
+          {data?.email}
         </Text>
         <QRCode size={120} value="testeewqe2q" />
         <Pressable onPress={onExpandQRCode} className="mt-6">

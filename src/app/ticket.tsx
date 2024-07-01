@@ -1,11 +1,13 @@
 import { FontAwesome } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
+import { Redirect } from 'expo-router'
 import { useState } from 'react'
 import {
   Alert,
   Modal,
   Pressable,
   ScrollView,
+  Share,
   StatusBar,
   Text,
   View,
@@ -15,11 +17,25 @@ import { Button } from '@/components/button'
 import { Credential } from '@/components/credential'
 import { Header } from '@/components/header'
 import { QRCode } from '@/components/qrcode'
+import { useBadgeStore } from '@/store/badge-store'
 import { colors } from '@/styles/colors'
 
 export default function Ticket() {
-  const [image, setImage] = useState('')
+  const badgeStore = useBadgeStore()
   const [expandQRCode, setExpandQRCode] = useState(false)
+
+  async function handleShare() {
+    try {
+      if (badgeStore.data?.checkInURL) {
+        await Share.share({
+          message: badgeStore.data.checkInURL,
+        })
+      }
+    } catch (error) {
+      console.log(error)
+      Alert.alert('Compartilhar', 'Não foi possivel compartilhar!')
+    }
+  }
 
   async function handleSelectImage() {
     try {
@@ -30,7 +46,7 @@ export default function Ticket() {
       })
 
       if (result.assets) {
-        setImage(result.assets[0].uri)
+        badgeStore.updateAvatar(result.assets[0].uri)
       }
     } catch (error) {
       console.log(error)
@@ -38,6 +54,32 @@ export default function Ticket() {
     }
   }
 
+  function handleRemoveAccessCredentials() {
+    try {
+      Alert.alert('Inscrição', 'Deseja remover seu ingresso?', [
+        {
+          text: 'Sim',
+          onPress: () => {
+            badgeStore.remove()
+          },
+        },
+        {
+          text: 'Não',
+          onPress: () => {
+            return false
+          },
+        },
+      ])
+    } catch (error) {
+      console.log(error)
+
+      Alert.alert('Inscrição', 'Não foi possivel remover o ingresso!')
+    }
+  }
+
+  if (!badgeStore.data?.checkInURL) {
+    return <Redirect href="/" />
+  }
   return (
     <View className="flex-1 bg-green-500">
       <StatusBar />
@@ -48,7 +90,6 @@ export default function Ticket() {
         showsVerticalScrollIndicator={false}
       >
         <Credential
-          image={image}
           onExpandQRCode={() => setExpandQRCode(true)}
           onChangeAvatar={handleSelectImage}
         />
@@ -63,12 +104,13 @@ export default function Ticket() {
           Compartilhar credencial
         </Text>
         <Text className="text-white font-regular text-base  mt-1 mb-6">
-          Mostre ao mundo que você vai participar do Unite Summit!
+          Mostre ao mundo que você vai participar do{' '}
+          {badgeStore.data?.eventTitle}!
         </Text>
 
-        <Button title="Compartilhar" />
+        <Button title="Compartilhar" onPress={handleShare} />
 
-        <Pressable className="mt-10">
+        <Pressable className="mt-10" onPress={handleRemoveAccessCredentials}>
           <Text className="text-base font-bold text-white text-center">
             Remover Ingresso
           </Text>

@@ -1,19 +1,65 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Link } from 'expo-router'
-import { useState } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
+import { Link, Redirect } from 'expo-router'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { Alert, Image, StatusBar, View } from 'react-native'
+import { z } from 'zod'
 
+import { accessCredentials } from '@/api/access-credentials'
 import { Button } from '@/components/button'
 import { Input } from '@/components/input'
+import { useBadgeStore } from '@/store/badge-store'
 import { colors } from '@/styles/colors'
 
-export default function Home() {
-  const [code, setCode] = useState('')
+const acessCredentialsSchema = z.object({
+  code: z.string(),
+})
 
-  function handleAccessCredentials() {
-    if (!code.trim()) {
-      return Alert.alert('Credencuak', 'Informe o código do ingresso')
+type AccessCredentialsFormInputs = z.infer<typeof acessCredentialsSchema>
+
+export default function Home() {
+  const badgeStore = useBadgeStore()
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { isSubmitting },
+  } = useForm<AccessCredentialsFormInputs>({
+    resolver: zodResolver(acessCredentialsSchema),
+    defaultValues: {
+      code: '',
+    },
+  })
+
+  const { mutateAsync: accessCredentialsFn } = useMutation({
+    mutationFn: accessCredentials,
+  })
+
+  async function handleAccessCredentials(
+    dataAccess: AccessCredentialsFormInputs,
+  ) {
+    try {
+      const response = await accessCredentialsFn({
+        code: dataAccess.code,
+      })
+
+      badgeStore.save(response.data.badge)
+    } catch (error) {
+      console.log(error)
+
+      Alert.alert('Inscrição', 'Ingresso não encontrado!')
     }
+  }
+
+  useEffect(() => {
+    register('code')
+  }, [register])
+
+  if (badgeStore.data?.checkInURL) {
+    return <Redirect href="/ticket" />
   }
 
   return (
@@ -29,7 +75,7 @@ export default function Home() {
         <Input>
           <Input.Field
             placeholder="Código do ingresso"
-            onChangeText={setCode}
+            onChangeText={(text) => setValue('code', text)}
           />
           <MaterialCommunityIcons
             name="ticket-confirmation-outline"
@@ -38,7 +84,11 @@ export default function Home() {
           />
         </Input>
 
-        <Button title="Acessar credencial" onPress={handleAccessCredentials} />
+        <Button
+          title="Acessar credencial"
+          onPress={handleSubmit(handleAccessCredentials)}
+          disabled={isSubmitting}
+        />
         <Link
           href="/register"
           className="text-gray-100 text-base font-bold mt-8 text-center"
