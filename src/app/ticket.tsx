@@ -1,6 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import { Redirect } from 'expo-router'
+import { MotiView } from 'moti'
 import { useState } from 'react'
 import {
   Alert,
@@ -94,12 +95,27 @@ export default function Ticket() {
           onChangeAvatar={handleSelectImage}
         />
 
-        <FontAwesome
-          name="angle-double-down"
-          size={24}
-          color={colors.gray[300]}
-          className="self-center my-6"
-        />
+        <MotiView
+          from={{
+            translateY: 0,
+          }}
+          animate={{
+            translateY: 10,
+          }}
+          transition={{
+            loop: true,
+            duration: 700,
+            type: 'spring',
+          }}
+        >
+          <FontAwesome
+            name="angle-double-down"
+            size={24}
+            color={colors.gray[300]}
+            className="self-center my-6"
+          />
+        </MotiView>
+
         <Text className="text-white font-bold text-2xl mt-4">
           Compartilhar credencial
         </Text>
